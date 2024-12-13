@@ -69,6 +69,7 @@ do
         # Adicinar o nome completo do aluno para o ficheiro
         echo $aluno >> ~/alunos.txt
         mkdir /home/$username/SistemasOperativos
+        chown $user:$user /home/$username/SistemasOperativos
         # Criação de variavel com o username dos alunos
         users=$users$username" "
         echo "$username account has been created for $aluno."
@@ -79,28 +80,30 @@ echo "All user accounts have been created."
 # Alterações de permissão
 for user in $users
 do
-    # Copia do ficheiro para pasta de cada aluno
     if id "$user" &>/dev/null
     then
+        # Copia do ficheiro para pasta de cada aluno
         cp ~/alunos.txt /home/$user/SistemasOperativos/
-    fi
-    # Alterações para o Lucas Almeida
-    if [ $user == "lalmeida" ] && id "$user" &>/dev/null
-    then
-        usermod -aG sudo,adm $user
-        echo "$user is now an Administrator."
-    # Alterações para a Beatriz Santos
-    elif [ $user == "bsantos" ] && id "$user" &>/dev/null
-    then
         chown $user:$user /home/$user/SistemasOperativos/alunos.txt
-        chmod 600 /home/$user/SistemasOperativos/alunos.txt
-        echo "Changed Beatriz permissions for her file."
-    # Alterações para o Gabriel Costa
-    elif [ $user == "gcosta" ] && id "$user" &>/dev/null
-    then
-        chmod u+rwx /home/$user/SistemasOperativos
-        echo "Changed Gabriel permissions for his directory."
-    fi    
+        # Alterações para o Lucas Almeida
+        if [ "$user" == "lalmeida" ]
+        then
+            usermod -aG sudo,adm $user
+            echo "$user is now an Administrator."
+        # Alterações para a Beatriz Santos
+        elif [ "$user" == "bsantos" ]
+        then
+            chmod 600 /home/$user/SistemasOperativos/alunos.txt
+            echo "Changed Beatriz permissions for her file."
+        # Alterações para o Gabriel Costa
+        elif [ "$user" == "gcosta" ]
+        then
+            chmod u+rwx /home/$user/SistemasOperativos
+            echo "Changed Gabriel permissions for his directory."
+        fi
+    else
+        echo "$user doesn't exist."    
+    fi
 done
 
 # Remoção do ficheiro original
@@ -117,7 +120,7 @@ then
     userdel -r lalmeida
     echo "lalmeida user has been removed."
 else
-    echo "lalmeida does not exist."
+    echo "lalmeida doesn't exist."
 fi
 
 # Alteração de atributos da password
@@ -134,7 +137,7 @@ do
 done                                                                                                                                                                                                                                                                                                                                                                       
 
 # 1.4 Verificação de permissões
-# Se Biatriz estiver no group de sudo remove-la
+# Se Biatriz estiver no group de sudo, remove-la
 if getent group sudo | grep bsantos &>/dev/null
 then
     deluser bsantos sudo
