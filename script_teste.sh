@@ -3,9 +3,8 @@
 for aluno in "Lucas Almeida" "Beatriz Santos" "Gabriel Costa"
 do
     lista_nome=($aluno)
-    primeiro_nome=${lista_nome[0],}
-    ultimo_nome=${lista_nome[1],}
-    username=${primeiro_nome:0:1}${ultimo_nome:0:7}
+    username=${lista_nome[0]:0:1}${lista_nome[1]:0:7}
+    username=${username,,}
     #if id "$username" &>/dev/null 
     #then
         #echo "User $username already exists."
@@ -17,4 +16,7 @@ do
     users=$users$username" "
 done
 
-echo $users
+for user in $users
+do
+    echo $user
+done
