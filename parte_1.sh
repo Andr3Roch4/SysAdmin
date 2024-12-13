@@ -67,8 +67,13 @@ do
     cp ~/alunos.txt /home/$user/SistemasOperativos/
     if [ $user == "lalmeida" ]
     then
-        usermod -aG sudo,adm $user
-        echo "$user is now an Administrator."
+        if id "$user" &>/dev/null
+        then
+            usermod -aG sudo,adm $user
+            echo "$user is now an Administrator."
+        else
+            echo "$user does not exist."
+        fi
     elif [ $user == "bsantos" ]
     then
         chown $user:$user /home/$user/SistemasOperativos/alunos.txt
@@ -86,21 +91,31 @@ cat /etc/passwd
 
 # 1.3 Alteração de contas de aluno
 
-userdel -r lalmeida
-echo "lalmeida user has been removed."
+if id "lalmeida" &>/dev/null
+then 
+    userdel -r lalmeida
+    echo "lalmeida user has been removed."
+else
+    echo "lalmeida does not exist."
+fi
 
 for user in bsantos gcosta
-do 
-    chage -M 365 $user
-    chage -W 7 $user
-    echo "Password settings have been set for user $user."
+do
+    if id "$user" &>/dev/null
+    then
+        chage -M 365 $user
+        chage -W 7 $user
+        echo "Password settings have been set for user $user."
+    else
+        echo "$user doesn't exist."
+    fi
 done                                                                                                                                                                                                                                                                                                                                                                       
 
 # 1.4 Verificação de permissões
 if getent group sudo | grep bsantos &>/dev/null
 then
     deluser bsantos sudo
-    echo "A beatriz deixou de ter capacidade para instalar pacotes."
+    echo "Biatriz no longer has permission to install packages."
 else
-    echo "A Beatriz já não tem capacidade de instalar pacotes."
+    echo "Beatriz doesn't have permission to install packages."
 fi
