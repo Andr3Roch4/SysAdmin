@@ -30,9 +30,9 @@ EOM
 }
 
 # Indicação que script precisa de pelo menos 1 argumento para correr
-if [ ! $1 ]
+if [ ! $# ]
 then
-    echo "Try to run the script with -h argument for more information."
+    echo "Try $0 -h for more information."
     exit 1
 fi
 
@@ -40,28 +40,51 @@ fi
 # Verificação se user tem permissão para realizar o backup
 if $2
 then
-    if [ -d $2 ] && ls $2 &>/dev/null
-    then 
-        continue
+    if [ -d $2 ]
+    then
+        if ls $2 &>/dev/null
+        then
+            continue
+        else
+            echo "You dont have permissions to perform this backup. Run script as root user."
+            exit 1
+        fi
     else
-        echo "You dont have permissions to perform this backup. Run script as root user."
+        echo "Must provide a valid directory path."
         exit 1
     fi
 fi
 
 # Diretório e logs de backup
-if [ ! -f /mnt/backups/logs.txt ]
-then
-    if [ ! -d /mnt/backups ]
+user=$(whoami)
+if [ "$(id -u)" -eq 0 ]
+then 
+    if [ ! -f /var/backups/logs.txt ]
     then
-        mkdir /mnt/backups
+        if [ ! -d /var/backups ]
+        then
+            mkdir /var/backups
+        fi
+        touch /var/backups/logs.txt
     fi
-    touch /mnt/backups/logs.txt
-    # date +%d/%m/%y
+    # Destino dos backups
+    dest_path="/var/backups"
+    logs_path="/var/backups/logs.txt"
+else
+    if [ ! -f /home/$user/backups/logs.txt ]
+    then
+        if [ ! -d /home/$user/backups ]
+        then
+            mkdir /home/$user/backups
+        fi
+        touch /home/$user/backups/logs.txt
+    fi
+    # Destino dos backups
+    dest_path="/home/$user/backups"
+    logs_path="/home/$user/backups/logs.txt"
 fi
 
-# Destino dos backups
-dest_path="/mnt/backups"
+    # date +%d/%m/%y
 
 # Lógica dependendo do primeiro argumento
 case $1 in
@@ -73,26 +96,34 @@ case $1 in
         fi
         if $3
         then
-            # Backup com schedule
-            case $3 in
-                h)
-                ;;
-                s)
-                ;;
-                d)
-                    week=(seg ter qua qui sex sab dom)
-                    if cat "$week" | grep "$4"
-                    then
-                        # crontab
-                        # Preciso fazer um script para correr no crontab (e criar logs)?
-                    else
-                        echo -e "Specify correct day of the week from:\nseg ter qua qui sex sab dom"
-                        exit 1
-                    fi
-                ;;
-                m)
-                ;;
-            esac
+            if [ "$(id -u)" -ne 0 ]
+            then
+                echo "Must have root permission to schedule a backup cronjob."
+                exit 1
+            else
+                # Backup com schedule
+                case $3 in
+                    -h)
+                    ;;
+                    -s)
+                    ;;
+                    -d)
+                        week=(seg ter qua qui sex sab dom)
+                        if cat "$week" | grep "$4"
+                        then
+                            # crontab
+                            # Preciso fazer um script para correr no crontab (e criar logs)?
+                        else
+                            echo -e "Specify correct day of the week from:\nseg ter qua qui sex sab dom"
+                            exit 1
+                        fi
+                    ;;
+                    -m)
+                    ;;
+                    *) echo -e "Invalid command option.\nTry $0 -h for more information."
+                    ;;
+                esac
+            fi
         else
             # Backup no momento
             
