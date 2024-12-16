@@ -37,23 +37,7 @@ then
 fi
 
 # Só precisamos de fazer backup de dir?
-# Verificação se user tem permissão para realizar o backup
-if $2
-then
-    if [ -d $2 ]
-    then
-        if ls $2 &>/dev/null
-        then
-            continue
-        else
-            echo "You dont have permissions to perform this backup. Run script as root user."
-            exit 1
-        fi
-    else
-        echo "Must provide a valid directory path."
-        exit 1
-    fi
-fi
+
 
 # Diretório e logs de backup
 user=$(whoami)
@@ -84,14 +68,29 @@ else
     logs_path="/home/$user/backups/logs.txt"
 fi
 
-    # date +%d/%m/%y
 
 # Lógica dependendo do primeiro argumento
 case $1 in
     # Realizar backup. Verificação se existe caminho para pasta ou ficheiro.
-    -b) if [ ! $2 ]
+    -b) 
+        # Verificação se user tem permissão para realizar o backup
+        if [ -n $2 ]
         then
-            echo "Must specify target path of backup. Try -h for more information."
+            if [ -d $2 ]
+            then
+                if ls $2 &>/dev/null
+                then
+                    continue
+                else
+                    echo "You dont have permissions to perform this backup. Run script as root user."
+                    exit 1
+                fi
+            else
+                echo "Must specify valid target path of backup. Try -h for more information."
+                exit 1
+            fi
+        else
+            echo "Must specify valid target path of backup. Try -h for more information."
             exit 1
         fi
         if $3
@@ -125,14 +124,37 @@ case $1 in
                 esac
             fi
         else
+            # Utilizar apenas a data e o nome da pasta para o nome do ficheiro backup
+            date=$(date +%d_%m_%y)
+            dir_name=${$2##*/}
+            # Backup file path
+            backup_file=$dest_path"/"$date"_"$dir_name"_backup.tar.gz"
             # Backup no momento
-            
+            tar -cvzf $backup_file $2
+            echo "$backup_file,$2" >> $logs_path
         fi
     ;;
     # Realizar restauro. Verificação se existe caminho para ficheiro de restauro.
-    -r) if [ ! $2 ]
+    -r) if [ -n $2 ]
         then
-            echo "Must specify path of recovery file. Try -h for more information."
+            if [ -f $2 ]
+            then
+                while IFS=",", read col1 col2
+                do
+                    if [ $col1 == $2 ]
+                    then
+                        rec_folder=$col2
+                    else
+                        continue
+                    fi
+                done < $logs_path
+                tar -xvzf $2 $rec_folder
+            else
+                echo "Must specify valid target path for restore file. Try -h for more information."
+                exit 1
+            fi
+        else
+            echo "Must specify valid target path for restore file. Try -h for more information."
             exit 1
         fi
         # Restauro
@@ -140,6 +162,11 @@ case $1 in
     # Lista de backups realizados
     -l) 
         # Ficheiro de logs? dia de backup,caminho do ficheiro de backup,caminho do diretorio que levou backup
+        while IFS=",", read col1 col2
+        do
+            echo "File             Target"
+            echo "$col1            $col2"
+        done < $logs_path
     ;;
     -h|-help)
         help
