@@ -3,7 +3,7 @@
 # Criado por: André Rocha 12/2024
 # Este script automatiza a realização de backups e restauros
 # Permite agendar ou executar backups 
-# Recebe entre 1  argumentos para operações de backup(-b) e restauro(-r)
+# Recebe pelo menos 1 argumento para operações de backup e restauro
 # Pode receber apenas 1 argumento as flags de help(-h) e list(-l)
 
 
