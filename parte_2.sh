@@ -30,9 +30,9 @@ help () {
     param2: Input for scheduling
 
     Examples:
-    $0 -b /home/andre/Sysadmin -m 1,7
+    $0 -b /home/andre/Sysadmin -d 1 -m 1,7
     $0 -e /home/andre/Sysadmin
-    $0 -r /home/andre/backups/17_12_2024_Sysadmin_backup.tar.gz
+    $0 -r /home/andre/backups/17_12_2024_18h40m_Sysadmin_backup.tar.gz
 EOM
     exit 0
 }
@@ -214,7 +214,7 @@ do
             if backup_verification $backup_target
             then
                 # Utilizar apenas a data e o nome da pasta, no nome do ficheiro de backup
-                date=$(date +%d_%m_%y)
+                date=$(date +%d_%m_%y_%Hh%Mm)
                 dir_name=${backup_target##*/}
                 # Backup file path
                 backup_file=$dest_path"/"$date"_"$dir_name"_backup.tar.gz"

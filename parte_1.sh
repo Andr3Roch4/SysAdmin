@@ -8,6 +8,7 @@
 # Script deve ser corrido como root
 if [ "$(id -u)" -ne 0 ]
 then
+    echo "Must provide a path to a file."
     exit 1
 fi
 

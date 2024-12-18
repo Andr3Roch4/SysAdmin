@@ -5,19 +5,38 @@
 # com o path para o ficheiro dos utilizadores
 # e uma flag opcional(-v)
 
-# Script deve ser corrido como root
-if [ "$(id -u)" -ne 0 ]
+# Set v_flag
+v_flag=false
+
+# Parse flag opcional
+while getopts v opt
+do 
+    case $opt in
+        v)
+            v_flag=true
+        ;;
+        *)
+            echo "Usage: $0 [-v] argument"
+            exit 1
+        ;;
+    esac
+done
+
+# Com o shift do indice do opt o argumento vai ser sempre $1
+shift $((OPTIND - 1))
+
+# Verificação se existe caminho
+if [ -z $1 ] && [ -f $1 ]
 then
+    echo "Must provide a path to a file."
     exit 1
 fi
 
-# Atribuição de argumentos
-if [ $# -gt 1 ]
+# Script deve ser corrido como root
+if [ "$(id -u)" -ne 0 ]
 then
-    csv=$2
-    v_flag=$1
-else
-    csv=$1
+    echo "Must run as root user."
+    exit 1
 fi
 
 declare -i line=1
@@ -55,7 +74,7 @@ do
     fi
 
     # if -v fazer echos no loop
-    if [[ $v_flag == "-v" ]]
+    if [ "$v_flag" = true ]
     then
         echo "$user user has been created with $username username. Line $line done."
         line=$((line + 1))
