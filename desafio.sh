@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Criado por: André Rocha 12/2024
+# Criado por: André Rocha 18/12/2024
 # Este script recebe um argumento 
 # com o path para o ficheiro dos utilizadores
 # e uma flag opcional(-v)
@@ -36,25 +36,24 @@ do
     then
         echo "User $username already exists."
     else
+        # Add user
         useradd -m $username
+        # Set pw expiration
+        chage -M $pw $username
         users+=$username
+        # Atribuir admin
+        if [ $adm == "yes" ]
+        then
+            usermod -aG sudo $username
+        fi
+        # ficheiro sysAdmin.txt com mudança de dono
+        if [ $file == "yes" ]
+        then
+            touch /home/$username/sysAdmin.txt
+            chown $username:$username /home/$username/sysAdmin.txt
+        fi
     fi
 
-    # Atribuir admin
-    if [ $adm == "yes" ]
-    then
-        usermod -aG sudo $username
-    fi
-
-    # Set pw expiration
-    chage -M $pw $username
-    
-    # ficheiro sysAdmin.txt com mudança de dono
-    if [ $file == "yes" ]
-    then
-        touch /home/$username/sysAdmin.txt
-        chown $username:$username /home/$username/sysAdmin.txt
-    fi
     # if -v fazer echos no loop
     if [[ $v_flag == "-v" ]]
     then

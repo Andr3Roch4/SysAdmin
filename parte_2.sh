@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Criado por: André Rocha 12/2024
+# Criado por: André Rocha 18/12/2024
 # Este script automatiza a realização de backups e restauros
 # Permite agendar ou executar backups 
-# Recebe pelo menos 1 argumento para operações de backup e restauro
-# Pode receber apenas 1 argumento as flags de help(-h) e list(-l)
+# Recebe pelo menos 2 argumentos para operações de backup e restauro
+# Pode receber apenas 1 argumento para as flags de help(-h) e list(-l)
 
 
 # Função para help
@@ -39,7 +39,7 @@ EOM
 
 # Função para verificação backup
 backup_verification () {
-    if [ -n $1 ] && ( [ -d $1 ] || [ -f $1 ] ) && [ -r $1 ]
+    if [ -n "$1" ] && ( [ -d "$1" ] || [ -f "$1" ] ) && [ -r "$1" ]
     then
         return 0
     else
@@ -48,12 +48,12 @@ backup_verification () {
 }
 # Função para verificação do schedule de backup
 backup_schedule_verification () {
-    if echo $2 | grep ,- &>/dev/null
+    if echo $2 | grep -E ",|-" &>/dev/null
     then
         IFS=",-"
         for i in $2
         do
-            if echo $1 | grep $i &>/dev/null
+            if eval echo $1 | grep $i &>/dev/null
             then
                 continue
             else
@@ -61,7 +61,7 @@ backup_schedule_verification () {
             fi
         done
         return 0
-    elif echo $1 | grep $2 &>/dev/null
+    elif eval echo $1 | grep $2 &>/dev/null
     then
         return 0
     else
@@ -140,7 +140,10 @@ do
             if backup_schedule_verification $range $OPTARG
             then
                 cron_m=$OPTARG
-                cron_d="1"
+                if [ "$cron_d" == "*" ]
+                then
+                    cron_d="1"
+                fi
             else
                 echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
             fi

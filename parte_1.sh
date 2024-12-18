@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Criado por: André Rocha 12/2024
+# Criado por: André Rocha 15/12/2024
 # Este script automatiza instalação de pacotes,
 # criação de contas de utilizador e
 # gestão de permissões, em linux
