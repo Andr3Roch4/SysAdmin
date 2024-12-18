@@ -46,6 +46,7 @@ backup_verification () {
         return 1
     fi
 }
+
 # Função para verificação do schedule de backup
 backup_schedule_verification () {
     if echo $2 | grep -E ",|-" &>/dev/null
@@ -74,8 +75,6 @@ if [ $# -lt 1 ]
 then
     help
 fi
-
-# Só precisamos de fazer backup de dir?
 
 # Diretório e logs para guardar backups
 backup_dir () {
@@ -119,73 +118,84 @@ cron_d="*"
 cron_m="*"
 cron_s="*"
 
-# Lógica dependendo do argumento
-while getopts :b:e:r:lhM:H:d:m:s: opt
+# Logica para cada flag
+while getopts :b:e:r:lh opt
 do
     case $opt in
-        s)
-            # Agendar para dia/s da semana
-            range={0..6}
-            if backup_schedule_verification $range $OPTARG
-            then
-                cron_s=$OPTARG
-            else
-                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
-                exit 1
-            fi
-        ;;
-        m)
-            # Agendar para mês/es  
-            range={1..12}
-            if backup_schedule_verification $range $OPTARG
-            then
-                cron_m=$OPTARG
-                if [ "$cron_d" == "*" ]
-                then
-                    cron_d="1"
-                fi
-            else
-                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
-            fi
-        ;;
-        d)
-            # Agendar para dia/s do mês
-            range={1..31}
-            if backup_schedule_verification $range $OPTARG
-            then
-                cron_d=$OPTARG
-            else
-                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
-            fi
-        ;;
-        H)
-            # Agendar para hora/s
-            range={0..23}
-            if backup_schedule_verification $range $OPTARG
-            then
-                cron_H=$OPTARG
-            else
-                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
-            fi
-        ;;
-        M)
-            # Agendar para minuto/s
-            range={0..59}
-            if backup_schedule_verification $range $OPTARG
-            then
-                cron_M=$OPTARG
-            else
-                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
-            fi
-        ;;
         b) 
             # Agendar backup
             backup_dir
             # Verificação se existe caminho para pasta e se user tem permissão para realizar o backup
             backup_target=$OPTARG
+            # Tratamento da cronologia para o crontab
+            while getopts :M:H:d:m:s: opt
+            do
+                case $opt in
+                    s)
+                        # Agendar para dia/s da semana
+                        range={0..6}
+                        if backup_schedule_verification $range $OPTARG
+                        then
+                            cron_s=$OPTARG
+                        else
+                            echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
+                            exit 1
+                        fi
+                    ;;
+                    m)
+                        # Agendar para mês/es  
+                        range={1..12}
+                        if backup_schedule_verification $range $OPTARG
+                        then
+                            cron_m=$OPTARG
+                            if [ "$cron_d" == "*" ]
+                            then
+                                cron_d="1"
+                            fi
+                        else
+                            echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
+                            exit 1
+                        fi
+                    ;;
+                    d)
+                        # Agendar para dia/s do mês
+                        range={1..31}
+                        if backup_schedule_verification $range $OPTARG
+                        then
+                            cron_d=$OPTARG
+                        else
+                            echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
+                            exit 1
+                        fi
+                    ;;
+                    H)
+                        # Agendar para hora/s
+                        range={0..23}
+                        if backup_schedule_verification $range $OPTARG
+                        then
+                            cron_H=$OPTARG
+                        else
+                            echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
+                            exit 1
+                        fi
+                    ;;
+                    M)
+                        # Agendar para minuto/s
+                        range={0..59}
+                        if backup_schedule_verification $range $OPTARG
+                        then
+                            cron_M=$OPTARG
+                        else
+                            echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
+                            exit 1
+                        fi
+                    ;;
+                esac
+            done
             if backup_verification $backup_target
             then
-                cron_command="$0 -e $backup_target"
+                script=$(pwd $0)/$(basename $0)
+                cron_command="$script -e $backup_target"
                 cron="$cron_M $cron_H $cron_d $cron_m $cron_s"
                 # Introdução do cronjob no crontab
                 (crontab -l ; echo "$cron $cron_command") | crontab -
@@ -205,7 +215,7 @@ do
             then
                 # Utilizar apenas a data e o nome da pasta, no nome do ficheiro de backup
                 date=$(date +%d_%m_%y)
-                dir_name=${$backup_target##*/}
+                dir_name=${backup_target##*/}
                 # Backup file path
                 backup_file=$dest_path"/"$date"_"$dir_name"_backup.tar.gz"
                 # Backup no momento
@@ -236,18 +246,20 @@ do
                     fi
                 done < $logs_path
                 # Se ficheiro for encontrado nos logs e tivermos permissões, realizar restauro do diretorio
-                if $restore_target && [ -w $restore_target ]
+                if [ -d $restore_target ]
+                then
+                    rm -rf $restore_target/*
+                elif [ -f $restore_target ]
                 then
                     rm -rf $restore_target
-                    tar -xzvf $restore_file $restore_target
-                    echo "$restore_target has been restored."
-                    exit 0
                 else
-                    echo "Couldn't find backup file in logs, or you don't have permissions to restore target folder."
-                    exit 1
+                    continue
                 fi
+                tar -xzvf $restore_file -C /
+                echo "$restore_target has been restored."
+                exit 0
             else
-                echo "Must specify valid target path for restore file. Try -h for more information."
+                echo "Couldn't find backup file in logs, or you don't have permissions to restore target folder."
                 exit 1
             fi
         ;;
@@ -259,8 +271,7 @@ do
             then
                 while IFS=",", read col1 col2
                 do
-                    echo "File             Directory"
-                    echo "$col1            $col2"
+                    echo "FILE:$col1    TARGET:$col2"
                 done < $logs_path
             else
                 echo "No backups done by this user."
