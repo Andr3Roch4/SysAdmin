@@ -113,53 +113,18 @@ backup_dir () {
 }
 
 # Default point para o schedule
-cron_M="*"
-cron_H="*"
+cron_M="0"
+cron_H="0"
 cron_d="*"
 cron_m="*"
 cron_s="*"
 
-# Lógica dependendo do primeiro argumento
+# Lógica dependendo do argumento
 while getopts :b:e:r:lhM:H:d:m:s: opt
 do
     case $opt in
-        M)
-            range={0..59}
-            if backup_schedule_verification $range $OPTARG
-            then
-                cron_M=$OPTARG
-            else
-                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
-            fi
-        ;;
-        H)
-            range={0..23}
-            if backup_schedule_verification $range $OPTARG
-            then
-                cron_H=$OPTARG
-            else
-                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
-            fi
-        ;;
-        d)
-            range={1..31}
-            if backup_schedule_verification $range $OPTARG
-            then
-                cron_d=$OPTARG
-            else
-                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
-            fi
-        ;;
-        m)
-            range={1..12}
-            if backup_schedule_verification $range $OPTARG
-            then
-                cron_m=$OPTARG
-            else
-                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
-            fi
-        ;;
         s)
+            # Agendar para dia/s da semana
             range={0..6}
             if backup_schedule_verification $range $OPTARG
             then
@@ -169,6 +134,47 @@ do
                 exit 1
             fi
         ;;
+        m)
+            # Agendar para mês/es  
+            range={1..12}
+            if backup_schedule_verification $range $OPTARG
+            then
+                cron_m=$OPTARG
+                cron_d="1"
+            else
+                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
+            fi
+        ;;
+        d)
+            # Agendar para dia/s do mês
+            range={1..31}
+            if backup_schedule_verification $range $OPTARG
+            then
+                cron_d=$OPTARG
+            else
+                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
+            fi
+        ;;
+        H)
+            # Agendar para hora/s
+            range={0..23}
+            if backup_schedule_verification $range $OPTARG
+            then
+                cron_H=$OPTARG
+            else
+                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
+            fi
+        ;;
+        M)
+            # Agendar para minuto/s
+            range={0..59}
+            if backup_schedule_verification $range $OPTARG
+            then
+                cron_M=$OPTARG
+            else
+                echo -e "Must provide a valid schedule range.\nTry $0 -h for more information."
+            fi
+        ;;
         b) 
             # Agendar backup
             backup_dir
@@ -176,7 +182,7 @@ do
             backup_target=$OPTARG
             if backup_verification $backup_target
             then
-                cron_command="$0 -b $backup_target"
+                cron_command="$0 -e $backup_target"
                 cron="$cron_M $cron_H $cron_d $cron_m $cron_s"
                 # Introdução do cronjob no crontab
                 (crontab -l ; echo "$cron $cron_command") | crontab -
