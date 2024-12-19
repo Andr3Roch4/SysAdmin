@@ -79,5 +79,5 @@ do
         echo "$user user has been created with $username username. Line $line done."
         line=$((line + 1))
     fi
-done < $csv
+done < $1
 echo "All users have been correctly set up."

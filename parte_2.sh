@@ -37,7 +37,7 @@ EOM
     exit 0
 }
 
-# Função para verificação backup
+# Função para verificação do backup target
 backup_verification () {
     if [ -n "$1" ] && ( [ -d "$1" ] || [ -f "$1" ] ) && [ -r "$1" ]
     then
@@ -47,7 +47,7 @@ backup_verification () {
     fi
 }
 
-# Função para verificação do schedule de backup
+# Função para verificação do input do agendamento de backup
 backup_schedule_verification () {
     if echo $2 | grep -E ",|-" &>/dev/null
     then
@@ -69,12 +69,6 @@ backup_schedule_verification () {
         return 1
     fi
 }
-
-# Indicação que script precisa de pelo menos 1 argumento ou no máximo 4 para correr
-if [ $# -lt 1 ]
-then
-    help
-fi
 
 # Diretório e logs para guardar backups
 backup_dir () {
@@ -111,14 +105,20 @@ backup_dir () {
     fi
 }
 
-# Default point para o schedule
+# Indicação que script precisa de pelo menos 1 argumento para correr
+if [ $# -lt 1 ]
+then
+    help
+fi
+
+# Default point para o agendamento de backup no crontab
 cron_M="0"
 cron_H="0"
 cron_d="*"
 cron_m="*"
 cron_s="*"
 
-# Logica para cada flag
+# Gestão de cada flag com o getopts
 while getopts :b:e:r:lh opt
 do
     case $opt in
@@ -127,7 +127,7 @@ do
             backup_dir
             # Verificação se existe caminho para pasta e se user tem permissão para realizar o backup
             backup_target=$OPTARG
-            # Tratamento da cronologia para o crontab
+            # Tratamento das flags para o agendamento do backup no crontab
             while getopts :M:H:d:m:s: opt
             do
                 case $opt in
@@ -194,6 +194,7 @@ do
             done
             if backup_verification $backup_target
             then
+                # Caminho absoluto para o script
                 script=$(pwd $0)/$(basename $0)
                 cron_command="$script -e $backup_target"
                 cron="$cron_M $cron_H $cron_d $cron_m $cron_s"
@@ -209,11 +210,11 @@ do
         e)
             # Realizar backup no momento
             backup_dir
-            # Verificação se existe caminho para pasta e se user tem permissão para realizar o backup
             backup_target=$OPTARG
+            # Verificação se existe caminho para pasta e se user tem permissão para realizar o backup
             if backup_verification $backup_target
             then
-                # Utilizar apenas a data e o nome da pasta, no nome do ficheiro de backup
+                # Utilizar a data e o nome da pasta, no nome do ficheiro de backup
                 date=$(date +%d_%m_%y_%Hh%Mm)
                 dir_name=${backup_target##*/}
                 # Backup file path
@@ -221,6 +222,7 @@ do
                 # Backup no momento
                 tar -czvf $backup_file $backup_target
                 echo "Backup of $backup_target into $backup_file complete."
+                # Guardar realização do backup no ficheiro de logs
                 echo "$backup_file,$backup_target" >> $logs_path
                 echo "Log file updated."
                 exit 0
@@ -232,8 +234,8 @@ do
         r) 
             # Realizar restauro
             backup_dir
-            # Verificação se existe caminho para ficheiro de restauro
             restore_file=$OPTARG
+            # Verificação se existe caminho para ficheiro de restauro
             if [ -n $restore_file ] && [ -f $restore_file ] && [ -r $restore_file ]
             then
                 while IFS=",", read col1 col2
@@ -245,13 +247,13 @@ do
                         continue
                     fi
                 done < $logs_path
-                # Se ficheiro for encontrado nos logs e tivermos permissões, realizar restauro do diretorio
+                # Se ficheiro for encontrado nos logs, realizar restauro
                 if [ -d $restore_target ]
                 then
                     rm -rf $restore_target/*
                 elif [ -f $restore_target ]
                 then
-                    rm -rf $restore_target
+                    rm -f $restore_target
                 else
                     continue
                 fi
