@@ -198,7 +198,7 @@ do
                 script=$(pwd $0)/$(basename $0)
                 cron_command="$script -e $backup_target"
                 cron="$cron_M $cron_H $cron_d $cron_m $cron_s"
-                # Introdução do cronjob no crontab
+                # Introdução do cronjob no crontab. Para funcionar o serviço cron precisa de estar a correr, verificar com: service cron status
                 (crontab -l ; echo "$cron $cron_command") | crontab -
                 echo "Cronjob has been set. The following line has been used: $cron $cron_command."
                 exit 0
@@ -254,8 +254,6 @@ do
                 elif [ -f $restore_target ]
                 then
                     rm -f $restore_target
-                else
-                    continue
                 fi
                 tar -xzvf $restore_file -C /
                 echo "$restore_target has been restored."
