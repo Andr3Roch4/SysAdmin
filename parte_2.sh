@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Criado por: André Rocha 18/12/2024
+# Pode ser executado como root ou não
 # Este script automatiza a realização de backups e restauros
 # Permite agendar ou executar backups 
 # Recebe pelo menos 2 argumentos para operações de backup e restauro
@@ -125,7 +126,6 @@ do
         b) 
             # Agendar backup
             backup_dir
-            # Verificação se existe caminho para pasta e se user tem permissão para realizar o backup
             backup_target=$OPTARG
             # Tratamento das flags para o agendamento do backup no crontab
             while getopts :M:H:d:m:s: opt
@@ -192,6 +192,7 @@ do
                     ;;
                 esac
             done
+            # Verificação se existe caminho para pasta e se user tem permissão para realizar o backup
             if backup_verification $backup_target
             then
                 # Caminho absoluto para o script
@@ -247,11 +248,11 @@ do
                         continue
                     fi
                 done < $logs_path
-                # Se ficheiro for encontrado nos logs, realizar restauro
-                if [ -d $restore_target ]
+                # Se ficheiro for encontrado nos logs e tivermos permissão, realizar restauro
+                if [ -d $restore_target ] && [ -w $restore_target ]
                 then
                     rm -rf $restore_target/*
-                elif [ -f $restore_target ]
+                elif [ -f $restore_target ] && [ -w $restore_target ]
                 then
                     rm -f $restore_target
                 fi
