@@ -1,0 +1,6 @@
+name: EA
+
+services:
+  python:
+    image: ea:v1
+    
