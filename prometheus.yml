@@ -1,3 +1,5 @@
+# Criado por: André Rocha 18/02/2025
+
 scrape_configs:
 - job_name: cadvisor
   scrape_interval: 10s
