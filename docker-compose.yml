@@ -26,6 +26,16 @@ services:
     restart: 'unless-stopped'
     ports:
       - 8096:8096
+  
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime-kuma
+    volumes:
+      - ./uptime-kuma-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 3001:3001
+    restart: unless-stopped
 
   # Serviços de container monitoring
   prometheus:
@@ -38,6 +48,7 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
     restart: unless-stopped
+    privileged: true
     networks:
       - container_net
     depends_on:
@@ -54,6 +65,7 @@ services:
     - /sys:/sys:ro
     - /var/lib/docker/:/var/lib/docker:ro
     restart: unless-stopped
+    privileged: true
     networks:
       - container_net
     depends_on:
@@ -68,6 +80,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    privileged: true
     networks:
       - container_net
     depends_on:
