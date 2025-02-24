@@ -29,7 +29,7 @@ services:
   
   # Serviços de container monitoring
   # 1. Uptime-kuma (Pode ser configurado monitorização do serviço do jellyfin por http + o próprio container do jellyfin)
-  # 2. cAdvisor + Prometheus + Grafana (Importei a dashboard 15331 no grafana, após fazer a coneção com o prometheus)
+  # 2. cAdvisor + Prometheus (ficher .yml da configuração do prometheus incluido na entrega) + Grafana (Importei a dashboard 15331 no grafana, após fazer a coneção com o prometheus)
   uptime-kuma:
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma
